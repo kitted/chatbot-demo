@@ -80,6 +80,9 @@ export default function FloatingChatbot() {
   const wasDraggedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const SIZE_OPTIONS = ["S", "M", "L", "XL"];
+  const COLOR_OPTIONS = ["Đỏ", "Xanh", "Trắng", "Đen"];
+
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const raw = localStorage.getItem("floating_chat_history");
@@ -105,7 +108,16 @@ export default function FloatingChatbot() {
     }
   });
   const [input, setInput] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<
+    | (Product & {
+        size?: string;
+        color?: string;
+      })
+    | null
+  >(null);
+  const [selectStep, setSelectStep] = useState<null | "size" | "color">(null);
+  const RETURN_POLICY_LINK = "https://bemineshop.com/chinh-sach-doi-tra";
+
   const [collectInfoStep, setCollectInfoStep] = useState<
     null | "name" | "phone" | "address"
   >(null);
@@ -241,12 +253,34 @@ export default function FloatingChatbot() {
       });
       pushBot({
         text: "Mời bạn xem thêm các sản phẩm khác! Xin cảm ơn!.",
+        quickReplies: ["Xem mẫu", "Tôi đã có mã", "Chỉ xem giá"],
       });
     }, 900);
   };
 
   const processUserMessage = (text: string, meta?: any) => {
     const lower = (text || "").toLowerCase();
+    if (meta?.type === "quick" && meta.value.startsWith("Phân khúc")) {
+      // tách ra mã sản phẩm
+      const parts = meta.value.split("-").map((x: any) => x.trim());
+      const code = parts[1]; // D001, D002, ...
+
+      // Kiểm tra sản phẩm tồn tại
+      const p = PRODUCTS.find((x) => x.id === code);
+      if (p) {
+        setSelectedProduct(p);
+        pushBot({ text: `Bạn chọn: ${p.name} (${p.id})`, image: p.imgs[0] });
+        pushBot({ text: p.desc });
+        pushBot({ text: `Giá: ${money(p.price)}` });
+        pushBot({
+          text: "Bạn muốn chọn size/màu hay xem chính sách đổi trả?",
+          quickReplies: ["Chọn size/màu muốn mua", "Xem chính sách"],
+        });
+      } else {
+        pushBot({ text: "Mã sản phẩm không hợp lệ, vui lòng thử lại." });
+      }
+      return;
+    }
 
     // Handle quick replies
     if (meta?.type === "quick") {
@@ -298,6 +332,51 @@ export default function FloatingChatbot() {
         });
         return;
       }
+      if (meta?.type === "quick" && meta.value === "Chọn size/màu muốn mua") {
+        setSelectStep("size");
+        pushBot({
+          text: "Chọn size bạn muốn:",
+          quickReplies: SIZE_OPTIONS,
+        });
+        return;
+      }
+
+      if (selectStep === "size" && SIZE_OPTIONS.includes(text)) {
+        setSelectedProduct((p) => (p ? { ...p, size: text } : null));
+        setSelectStep("color");
+        pushBot({
+          text: `Bạn đã chọn size: ${text}. Giờ chọn màu:`,
+          quickReplies: COLOR_OPTIONS,
+        });
+        return;
+      }
+
+      if (selectStep === "color" && COLOR_OPTIONS.includes(text)) {
+        setSelectedProduct((p) => (p ? { ...p, color: text } : null));
+        setSelectStep(null);
+        pushBot({
+          text: `Bạn đã chọn màu: ${text}. Muốn mua ngay hay chỉnh sửa thông tin?`,
+          quickReplies: ["Mua ngay", "Chỉnh sửa thông tin"],
+        });
+        return;
+      }
+
+      if (meta?.type === "quick" && meta.value === "Gửi link") {
+        pushBot({
+          text: `Bạn có thể xem chi tiết chính sách đổi trả tại đây: ${RETURN_POLICY_LINK}`,
+          quickReplies: ["Xem mẫu", "Tôi đã có mã", "Chỉ xem giá"],
+        });
+        return;
+      }
+
+      if (meta?.type === "quick" && meta.value === "Không cần") {
+        pushBot({
+          text: "OK bạn nhé! Nếu cần, có thể hỏi mình bất cứ lúc nào.",
+          quickReplies: ["Xem mẫu", "Tôi đã có mã", "Chỉ xem giá"],
+        });
+        return;
+      }
+
       if (PRODUCTS.some((p) => p.id === val)) {
         const p = PRODUCTS.find((x) => x.id === val)!;
         setSelectedProduct(p);
@@ -306,7 +385,7 @@ export default function FloatingChatbot() {
         pushBot({ text: `Giá: ${money(p.price)}` });
         pushBot({
           text: "Bạn muốn chọn size/màu hay xem chính sách đổi trả?",
-          quickReplies: ["Chọn size/màu", "Xem chính sách", "Mua ngay"],
+          quickReplies: ["Chọn size/màu muốn mua", "Xem chính sách"],
         });
         return;
       }
@@ -322,7 +401,7 @@ export default function FloatingChatbot() {
         pushBot({ text: `Giá: ${money(p.price)}` });
         pushBot({
           text: "Bạn muốn chọn size/màu hay xem chính sách đổi trả?",
-          quickReplies: ["Chọn size/màu", "Xem chính sách", "Mua ngay"],
+          quickReplies: ["Chọn size/màu muốn mua", "Xem chính sách"],
         });
         return;
       }
@@ -337,7 +416,7 @@ export default function FloatingChatbot() {
       pushBot({ text: `Giá: ${money(p.price)}` });
       pushBot({
         text: "Bạn muốn chọn size/màu hay xem chính sách đổi trả?",
-        quickReplies: ["Chọn size/màu", "Xem chính sách", "Mua ngay"],
+        quickReplies: ["Chọn size/màu muốn mua", "Xem chính sách"],
       });
       return;
     }
@@ -365,6 +444,13 @@ export default function FloatingChatbot() {
         pushBot({
           text: `Sản phẩm: ${selectedProduct?.name || "(chưa chọn)"}`,
         });
+        pushBot({
+          text: `Size: ${selectedProduct?.size || "(chưa chọn)"}`,
+        });
+        pushBot({
+          text: `Màu: ${selectedProduct?.color || "(chưa chọn)"}`,
+        });
+
         pushBot({ text: `Khách: ${updatedInfo.name || "(đang cập nhật)"}` });
         pushBot({ text: `SĐT: ${updatedInfo.phone || "(đang cập nhật)"}` });
         pushBot({
