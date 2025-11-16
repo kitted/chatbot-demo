@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .text-edge-outline {
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.sidebar-filter {
+  width: 100%;
+  max-width: 400px;
+  min-width: 280px;
+}
+
+.search-box {
+  width: 344px; /* W */
+  height: 40px; /* H */
+  border-radius: 16px; /* Corner radius ~ 16.36px */
+
+  /* Fill: Linear gradient */
+  background: linear-gradient(90deg, #0b4676 0%, #150dff 100%);
+
+  /* Stroke: white 28% */
+  border: 1px solid rgba(255, 255, 255, 0.28);
+
+  /* Background blur */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  /* Text styling (tùy bạn cần input hay div) */
+  color: #fff;
+  font-size: 14px;
+  padding: 0 12px;
+  outline: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE, Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Ẩn thanh scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE và Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.font-logo {
+  font-family: "Russo One", sans-serif;
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+.page-overlay {
+  animation: slideInFromRight 0.8s ease-in-out forwards;
+}
+
+@layer utilities {
+  .hide-calendar-icon::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+}
+
+.swiper-pagination {
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+  cursor: pointer;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #3b82f6;
+  /* Tailwind blue-500 */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.swiper-horizontal {
+  padding: 10px 0 !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+/* Ẩn mặc định và thay bằng thanh mảnh */
+.hide-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.hide-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hide-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* slate-300 */
+  border-radius: 9999px;
+}
+
+.hide-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
