@@ -89,7 +89,7 @@ export default function FloatingChatbot() {
             {
               id: nowId(),
               sender: "bot",
-              text: "Chào chị đẹp ✨ Chị đang tìm mẫu đầm nào ạ?! Mình là trợ lý bán hàng của BeMine shop. Bạn quan tâm sản phẩm nào?",
+              text: "Chào bạn ✨ Bạn đang tìm mẫu đầm nào ạ?! Mình là trợ lý bán hàng của BeMine shop. Bạn quan tâm sản phẩm nào?",
               quickReplies: ["Xem mẫu", "Tôi đã có mã", "Chỉ xem giá"],
             },
           ];
@@ -115,8 +115,22 @@ export default function FloatingChatbot() {
     address?: string;
   }>({});
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
   const sendingRef = useRef(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const today = new Date().toDateString();
+    const lastGreet = localStorage.getItem("floating_chat_last_greet");
+
+    if (lastGreet !== today) {
+      pushBot({
+        text: "Chào bạn ✨ Mình là trợ lý bán hàng của BeMine shop. Bạn đang tìm mẫu đầm nào ạ?",
+        quickReplies: ["Xem mẫu", "Tôi đã có mã", "Chỉ xem giá"],
+      });
+      localStorage.setItem("floating_chat_last_greet", today);
+    }
+  }, [open]);
 
   useEffect(() => {
     const placeInitial = () => {
@@ -219,27 +233,38 @@ export default function FloatingChatbot() {
     }, 600);
   };
 
+  const handleConfirmOrder = () => {
+    pushBot({ text: "Đang tạo đơn..." });
+    setTimeout(() => {
+      pushBot({
+        text: "Đã tạo đơn thành công! Nhân viên sẽ gọi xác nhận trong 30 phút.",
+      });
+      pushBot({
+        text: "Mời bạn xem thêm các sản phẩm khác! Xin cảm ơn!.",
+      });
+    }, 900);
+  };
+
   const processUserMessage = (text: string, meta?: any) => {
     const lower = (text || "").toLowerCase();
 
-    if (meta?.type === "select_product") {
-      const pid = meta.id as string;
-      const p = PRODUCTS.find((x) => x.id === pid) || null;
-      if (p) {
-        setSelectedProduct(p);
-        pushBot({ text: `Bạn chọn: ${p.name} (${p.id})`, image: p.imgs[0] });
-        pushBot({ text: p.desc });
-        pushBot({ text: `Giá: ${money(p.price)}` });
+    // Handle quick replies
+    if (meta?.type === "quick") {
+      const val = meta.value as string;
+
+      // ✅ Xử lý xác nhận đơn
+      if (val === "Xác nhận") {
+        handleConfirmOrder();
+        return;
+      }
+      if (val === "Chỉnh sửa thông tin") {
+        setCollectInfoStep("name");
         pushBot({
-          text: "Bạn muốn chọn size/màu hay xem chính sách đổi trả?",
-          quickReplies: ["Chọn size/màu", "Xem chính sách", "Mua ngay"],
+          text: "Bạn muốn sửa lại thông tin. Cho mình biết tên người nhận mới nhé.",
         });
         return;
       }
-    }
 
-    if (meta?.type === "quick") {
-      const val = meta.value as string;
       if (val === "Xem mẫu") {
         const picks = PRODUCTS.slice(0, 4);
         pushBot({
@@ -287,6 +312,22 @@ export default function FloatingChatbot() {
       }
     }
 
+    if (meta?.type === "select_product") {
+      const pid = meta.id as string;
+      const p = PRODUCTS.find((x) => x.id === pid) || null;
+      if (p) {
+        setSelectedProduct(p);
+        pushBot({ text: `Bạn chọn: ${p.name} (${p.id})`, image: p.imgs[0] });
+        pushBot({ text: p.desc });
+        pushBot({ text: `Giá: ${money(p.price)}` });
+        pushBot({
+          text: "Bạn muốn chọn size/màu hay xem chính sách đổi trả?",
+          quickReplies: ["Chọn size/màu", "Xem chính sách", "Mua ngay"],
+        });
+        return;
+      }
+    }
+
     const matchCode = (text || "").trim().toUpperCase();
     if (PRODUCTS.some((p) => p.id === matchCode)) {
       const p = PRODUCTS.find((x) => x.id === matchCode)!;
@@ -301,6 +342,7 @@ export default function FloatingChatbot() {
       return;
     }
 
+    // Collect customer info
     if (collectInfoStep) {
       if (collectInfoStep === "name") {
         setCustomerInfo((p) => ({ ...p, name: text }));
@@ -315,16 +357,18 @@ export default function FloatingChatbot() {
         return;
       }
       if (collectInfoStep === "address") {
-        setCustomerInfo((p) => ({ ...p, address: text }));
+        const updatedInfo = { ...customerInfo, address: text };
+        setCustomerInfo(updatedInfo);
         setCollectInfoStep(null);
+
         pushBot({ text: "Cám ơn! Mình tóm tắt đơn cho bạn:" });
         pushBot({
           text: `Sản phẩm: ${selectedProduct?.name || "(chưa chọn)"}`,
         });
-        pushBot({ text: `Khách: ${customerInfo.name || "(đang cập nhật)"}` });
-        pushBot({ text: `SĐT: ${customerInfo.phone || "(đang cập nhật)"}` });
+        pushBot({ text: `Khách: ${updatedInfo.name || "(đang cập nhật)"}` });
+        pushBot({ text: `SĐT: ${updatedInfo.phone || "(đang cập nhật)"}` });
         pushBot({
-          text: `Địa chỉ: ${customerInfo.address || "(đang cập nhật)"}`,
+          text: `Địa chỉ: ${updatedInfo.address || "(đang cập nhật)"}`,
         });
         pushBot({
           text: "Xác nhận đặt hàng?",
@@ -374,19 +418,6 @@ export default function FloatingChatbot() {
 
   const handleQuick = (value: string) => {
     sendLocal(value, { type: "quick", value });
-  };
-
-  const handleSelectProduct = (id: string) => {
-    sendLocal(id, { type: "quick", value: id });
-  };
-
-  const handleConfirmOrder = () => {
-    pushBot({ text: "Đang tạo đơn... Xin chờ 1s" });
-    setTimeout(() => {
-      pushBot({
-        text: "Đã tạo đơn thành công! Nhân viên sẽ gọi xác nhận trong 30 phút.",
-      });
-    }, 900);
   };
 
   const handleSendClick = () => sendLocal(input || undefined);
@@ -515,7 +546,7 @@ export default function FloatingChatbot() {
             )}
           </AnimatePresence>
 
-          <motion.button
+          {/* <motion.button
             onClick={handleToggle}
             whileTap={{ scale: 0.9 }}
             className="w-16 h-16 rounded-full shadow-xl flex items-center justify-center bg-pink-500"
@@ -524,6 +555,25 @@ export default function FloatingChatbot() {
               <X size={28} className="text-white" />
             ) : (
               <Phone size={28} className="text-white" />
+            )}
+          </motion.button> */}
+          <motion.button
+            onClick={handleToggle}
+            whileTap={{ scale: 0.9 }}
+            className="w-16 h-16 rounded-full shadow-xl flex items-center justify-center bg-pink-500"
+          >
+            {open ? (
+              <X size={28} className="text-white" />
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="white"
+                viewBox="0 0 24 24"
+                width="28"
+                height="28"
+              >
+                <path d="M12 2C6.48 2 2 6.01 2 11.25c0 2.97 1.64 5.62 4.13 7.21V22l4.05-2.25c.67.18 1.38.28 2.12.28 5.52 0 10-4.01 10-9.25S17.52 2 12 2zm-1 13l-3-4 6-5-3 4 3 4-6 5 3-4z" />
+              </svg>
             )}
           </motion.button>
         </div>

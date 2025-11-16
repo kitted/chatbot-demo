@@ -2,9 +2,9 @@ export function slugify(text: string) {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // bỏ dấu tiếng Việt
-    .replace(/[^a-z0-9]+/g, "-") // thay ký tự đặc biệt bằng "-"
-    .replace(/^-+|-+$/g, ""); // xóa dấu - thừa
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 export function shortenSlug(slug: string) {
   const stopWords = [
@@ -24,12 +24,10 @@ export function shortenSlug(slug: string) {
 
   let parts = slug.split("-");
 
-  // Nếu quá dài, cắt đến khoảng 6–8 từ đầu
   if (parts.length > 8) {
     parts = parts.slice(0, 8);
   }
 
-  // Bỏ các từ vô nghĩa
   parts = parts.filter((p) => !stopWords.includes(p));
 
   return parts.join("-");
