@@ -578,7 +578,7 @@ export default function FloatingChatbot() {
                 transition={{ type: "spring", damping: 18, stiffness: 230 }}
                 className={`absolute bottom-20 ${
                   onLeftSide ? "left-0" : "right-0"
-                } w-80 h-[520px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden`}
+                } w-[90vw] sm:w-80 h-[70vh] sm:h-[520px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden`}
               >
                 <div className="bg-pink-500 text-white p-3 font-semibold flex items-center justify-between">
                   <span>Tư vấn đầm BeMine Shop</span>
@@ -616,7 +616,7 @@ export default function FloatingChatbot() {
                   <input
                     type="text"
                     placeholder="Nhập tin nhắn hoặc mã (vd: D001)..."
-                    className="flex-1 border rounded-full px-3 py-2 text-sm outline-none"
+                    className="flex-1 border rounded-full px-3 py-2 text-sm outline-none w-[calc(100%-50px)]"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyUp={handleKeyUp}
